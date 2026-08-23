@@ -1,0 +1,10 @@
+{
+  "name": "simplelogs-vanilla-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "SimpleLogs in a plain HTML page — one script tag, no bundler",
+  "scripts": {
+    "start": "node serve.js"
+  }
+}

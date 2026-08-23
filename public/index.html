@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SimpleLogs — plain JavaScript example</title>
+
+    <!--
+      This is the whole integration.
+
+      The tag configures itself from its own data attributes, so there is no
+      init call to place and nothing to import. Once it loads, page views and
+      Web Vitals are already being captured and `window.SimpleLogs` is ready.
+
+      Replace ck_replace_me with your client key from Settings -> API Keys.
+
+      The client key is public by design — it only works from the origins you
+      allow in the dashboard, so add http://localhost:5173 there to see this
+      page report. The server key is a different value and never belongs here.
+    -->
+    <script
+      src="https://unpkg.com/@simplelogs/browser@1/dist/simplelogs.global.js"
+      data-client-key="ck_replace_me"
+      data-environment="development"
+    ></script>
+
+    <!--
+      Session replay is a second, optional tag. It carries rrweb, so a page
+      that only wants logging never downloads it. It has to come after the tag
+      above, which configures the key the two of them share.
+
+      Delete this line if you do not want replay. Add data-auto-start="false"
+      to load it without recording and call window.SimpleLogsReplay.start()
+      yourself — after a consent prompt, for example.
+    -->
+    <script src="https://unpkg.com/@simplelogs/browser@1/dist/simplelogs.replay.global.js"></script>
+
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 4rem auto; padding: 0 1rem; line-height: 1.6; }
+      button { font: inherit; padding: 0.5rem 1rem; margin: 0.25rem 0.25rem 0.25rem 0; cursor: pointer; }
+      pre { background: #f4f4f5; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+    </style>
+  </head>
+  <body>
+    <h1>Plain JavaScript</h1>
+    <p>
+      One script tag. No bundler, no npm, no build step. Open the network tab —
+      the requests to <code>/enqueue</code> are the SDK reporting.
+    </p>
+
+    <button id="log">Send a log</button>
+    <button id="time">Time an operation</button>
+    <button id="identify">Identify the user</button>
+    <button id="fail">Log an error</button>
+
+    <pre id="out">ready</pre>
+
+    <script>
+      const out = document.getElementById("out");
+      const show = (message) => (out.textContent = message);
+
+      // --- Log an event ---------------------------------------------------
+      // `touchpoint` is the name you will group by in the dashboard, so keep
+      // it stable: one name per thing that happens, not one per user or id.
+      document.getElementById("log").addEventListener("click", () => {
+        SimpleLogs.log({
+          touchpoint: "demo/button-click",
+          level: "info",
+          message: "Someone clicked the log button",
+          metadata: { page: location.pathname },
+        });
+        show("logged demo/button-click");
+      });
+
+      // --- Time an operation ----------------------------------------------
+      // start() and end() are matched on `key`, so two operations that overlap
+      // stay separate timings rather than one wrong one.
+      document.getElementById("time").addEventListener("click", async () => {
+        const key = "demo-fetch-" + Date.now();
+        SimpleLogs.start({ key, touchpoint: "demo/slow-operation" });
+
+        await new Promise((resolve) => setTimeout(resolve, 400));
+
+        SimpleLogs.end({ key, metadata: { ok: true } });
+        show("recorded a ~400ms timing under demo/slow-operation");
+      });
+
+      // --- Attach a user ---------------------------------------------------
+      // Call this after login, and again on any page load that restores a
+      // session. Anonymous activity earlier in this browser is attributed
+      // retroactively. Call SimpleLogs.clearIdentity() on logout.
+      document.getElementById("identify").addEventListener("click", () => {
+        SimpleLogs.identify({
+          userId: "user_123",
+          email: "ada@example.com",
+          groupId: "acme",
+          traits: { plan: "pro" },
+        });
+        show("identified user_123");
+      });
+
+      // --- Errors -----------------------------------------------------------
+      document.getElementById("fail").addEventListener("click", () => {
+        try {
+          null.oops();
+        } catch (error) {
+          SimpleLogs.log({
+            touchpoint: "demo/error",
+            level: "error",
+            message: error.message,
+            metadata: { stack: error.stack },
+          });
+          show("logged demo/error at level error");
+        }
+      });
+
+      // Entries are batched. A page closed mid-batch would lose them, so flush
+      // while the page can still send.
+      addEventListener("pagehide", () => SimpleLogs.flush());
+    </script>
+  </body>
+</html>
