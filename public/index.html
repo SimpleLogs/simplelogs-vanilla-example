@@ -76,7 +76,9 @@
       // start() and end() are matched on `key`, so two operations that overlap
       // stay separate timings rather than one wrong one.
       document.getElementById("time").addEventListener("click", async () => {
-        const key = "demo-fetch-" + Date.now();
+        // randomUUID, not Date.now(): two clicks inside the same millisecond
+        // would share a key and cross each other's start/end pair.
+        const key = "demo-fetch-" + crypto.randomUUID();
         SimpleLogs.start({ key, touchpoint: "demo/slow-operation" });
 
         await new Promise((resolve) => setTimeout(resolve, 400));
