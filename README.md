@@ -13,7 +13,7 @@ You need a **client key** — SimpleLogs dashboard → **Settings → API Keys**
 
    ```html
    <script
-     src="https://unpkg.com/@simplelogs/browser@1/dist/simplelogs.global.js"
+     src="https://unpkg.com/@simplelogs/browser@2/dist/simplelogs.global.js"
      data-client-key="ck_your_key_here"
      data-environment="development"
    ></script>
